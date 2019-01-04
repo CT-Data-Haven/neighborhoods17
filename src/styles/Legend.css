@@ -1,0 +1,12 @@
+.Legend {
+	position: absolute;
+	bottom: 1em;
+	left: 0.8em;
+	z-index: 5000;
+	margin: 8px;
+	font-size: 0.8em;
+	background-color: white;
+	padding: 4px;
+	opacity: 0.9;
+	border: 1px solid #bbb;
+}

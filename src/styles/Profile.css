@@ -1,0 +1,11 @@
+.Profile {
+
+}
+
+.Profile tr.list-table {
+
+}
+
+.Profile table.ui.definition.unstackable tr.list-map > td {
+  padding-left: 1.3rem;
+}

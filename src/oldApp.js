@@ -10,7 +10,6 @@ import Filters from './components/Filters';
 import Viz from './components/Viz';
 import Profile from './components/Profile';
 import DataTable from './components/DataTable';
-import Intro from './components/Intro';
 
 import './App.css';
 
@@ -18,6 +17,7 @@ import cities from './data/routes.js';
 import metaLong from './data/nhood_meta.json';
 import dataLong from './data/nhood_data.json';
 
+// all cities in one topojson
 const shpAll = require('./shapes/topo_all.json');
 const shapes = {
   new_haven: require('./shapes/new_haven_topo.json'),
@@ -28,12 +28,18 @@ const shapes = {
 
 const nBrks = 5;
 const palette = schemeGnBu[nBrks];
-const barscheme = [ '#3fa0e0', '#8f8f8f', '#8f8f8f', '#8f8f8f' ];
+const barscheme = [ '#32a7f5', '#8f8f8f', '#8f8f8f', '#8f8f8f' ];
 const year = 2017;
 
-const meta = _.groupBy(metaLong, 'topic');
+// metadata: object indexed by topic
+// initData: object indexed by city in order to pull data for one city easily, e.g. initData['new_haven']
+const meta = _.chain(metaLong)
+  .groupBy('topic')
+  // .mapValues((d) => _.keyBy(d, 'indicator'))
+  .value();
 const initData = _.groupBy(dataLong, 'city');
 const citiesIdx = _.keyBy(cities, 'id');
+console.log(_.filter(dataLong, { topic: 'age' }));
 
 // FUNCTIONS
 const firstNeighborhood = (city) => (
@@ -67,11 +73,16 @@ export default class App extends React.Component {
   constructor() {
     super();
     this.state = {
+      topic: reset.topic,
+      indicator: reset.indicator,
+      city: reset.city,
+      nhood: reset.nhood,
       topicData: [],
-      fetch: [],
-      isAscending: true,
-      sortCol: 'name',
-      ...reset
+      tableData: [],
+      indicatorData: [],
+      mapData: [],
+      mapColors: null,
+      barColors: null
     };
   }
 
@@ -81,80 +92,77 @@ export default class App extends React.Component {
     this.update({ ...opts });
   }
 
-  update(opts) {
-    let fetch = this.fetchData(opts);
-
-    this.setState({
-      indicator: opts.indicator,
-      fetch,
-      // topicData
-    });
-  }
-
   fetchData({ city, topic }) {
+    // will be filtered for indicator
+    // console.log(initData[city]);
     return _.filter(initData[city], { topic: topic });
   }
 
-  // takes fetch
-  toTopic(fetched, topic) {
-    return _.map(fetched, (d, i) => {
-        let metaVals = _.chain(meta[topic]).find({ indicator: d.indicator }).omit([ 'order', 'suborder' ]).value();
-        return ({ ...metaVals, ...d });
-      });
+  update(opts) {
+    let fetch = this.fetchData(opts);
+    // console.log(fetch);
+    // let topicData = this.toTopic(fetch, opts.topic);
+    // let indicatorData = _.sortBy(topicData[opts.indicator], 'value');
+    // let mapData = this.toMap(indicatorData);
+    let topicData = this.toTopic(fetch, opts.topic);
+    let indicatorData = this.toIndicator(topicData, opts.indicator);
+    let mapData = this.toMap(indicatorData);
+    // console.log('update - topicData', topicData);
+
+    this.setState({
+      indicator: opts.indicator,
+      indicatorData,
+      topicData,
+      mapData,
+      mapColors: this.makeMapScale(mapData),
+      barColors: this.makeBarScale(indicatorData)
+    });
   }
 
-  // takes topicData
-  toIndicator(byTopic, indicator) {
-    return _.chain(byTopic)
-      .filter({ indicator: indicator })
-      .flatMap('data')
-      .sortBy('value')
-      .value();
-  }
-
-  // takes indicatorData
-  toMap(byIndicator) {
-    return _.chain(byIndicator)
+  toMap(data) {
+    // object of data arrays for neighborhoods only, indexed by name
+    return _.chain(data)
       .filter({ geoType: '1_neighborhood' })
       .keyBy('name')
       .value();
   }
 
-  // takes topicData
-  // redo: wide data, keys are indicators
-  toTable(byTopic) {
-    console.log(byTopic);
-    let out = _.chain(byTopic)
-      .flatMap((d, i) => {
-        let metaVals = _.omit(d, 'data');
-        return d.data.map((v) => ({ ...metaVals, ...v }));
-      })
-      .groupBy('name')
-      .value();
+  toTopic(data, topic) {
+    // array of objects including data array
+    let out = _.map(data, (d, i) => {
+      console.log(d);
+      return _.chain(d)
+        .assignIn(_.pick(meta[topic][d.indicator], [ 'displayIndicator', 'format' ]))
+        .value();
+    });
+    // return _.map(data, (d, i) => (
+    //   _.chain(d)
+    //     // .pick([ 'indicator', 'data' ])
+    //     .assignIn(_.omit(meta[topic][d.indicator], [ 'order', 'suborder' ]))
+    //     .value()
+    // ));
     return out;
   }
 
-  ///////// scales
-  makeMapScale(data) {
-    let vals = _.map(data, 'value').sort((a, b) => a - b);
-    if (!vals.length) {
-      return scaleThreshold().domain([0, 1]).range(['#ccc']);
-    } else {
-      let brks = ckmeans(vals, nBrks).map((d) => d[0]).slice(1);
-      return scaleThreshold()
-        .domain(brks)
-        .range(palette);
-    }
+  toIndicator(data, indicator) {
+    // array of objects for only this indicator
+    // console.log('toIndicator', _.chain(data).map('data').flattenDeep().filter({indicator: 'share_ages0_17'}).value());
+    return _.chain(data)
+      .flatMap('data')
+      .filter({ indicator: indicator })
+      .sortBy('value')
+      .value();
   }
 
-  makeBarScale(data) {
-    let geos = _.map(data, 'geoType').sort();
-    return scaleOrdinal()
-      .domain(geos)
-      .range(barscheme);
+  toTable(data) {
+    return _.chain(data)
+      .flatMap((d, i) => (
+        _.flatMap(d.data, (v) => _.assignIn(v, _.omit(d, 'data')))
+      ))
+      .groupBy('name')
+      .value();
   }
 
-  ////////// event handlers
   handleSelect = (e, { name, value }) => {
     if (name === 'city') {
       this.setState({
@@ -180,45 +188,47 @@ export default class App extends React.Component {
     });
   };
 
-  handleBar = ({ column }) => {
-    let name = column.name;
-    this.setState({
-      nhood: name
-    });
+  handleBar = (e) => {
+    console.log(e);
   };
 
-  handleRowClick = (name) => {
-    this.setState({
-      nhood: name
-    });
-  };
+  makeMapScale(data) {
+    let vals = _.map(data, 'value').sort((a, b) => a - b);
+    if (!vals.length) {
+      return scaleThreshold().domain([0, 1]).range(['#ccc']);
+    } else {
+      let brks = ckmeans(vals, nBrks).map((d) => d[0]).slice(1);
+      return scaleThreshold()
+        .domain(brks)
+        .range(palette);
+    }
+  }
 
-  handleTableSort = (column) => () => {
-    let isAscending = _.isNull(this.state.isAscending) ? true : !this.state.isAscending;
-    this.setState({
-      sortCol: column,
-      isAscending
-    });
-  };
+  makeBarScale(data) {
+    let geos = _.map(data, 'geoType').sort();
+    return scaleOrdinal()
+      .domain(geos)
+      .range(barscheme);
+  }
+
 
   render() {
     let indicators = fetchIndicators(this.state.topic);
     let displayIndicator = _.find(indicators, { indicator: this.state.indicator }).displayIndicator;
 
-    // lots of different shapes of data
-    // all indicators
-    let topicData = this.toTopic(this.state.fetch, this.state.topic);
-    let table = this.toTable(topicData);
+    // experiment
+    // let toTable = this.toProfile(this.state.topicData);
+    // let toProfile = _.mapValues(toTable, (d, i) => {
+    //   return _.find(d, { name: this.state.nhood });
+    // });
+    // console.log(this.state.topicData);
+    // console.log(toTable);
+    // console.log(toProfile);
+    let table = this.toTable(this.state.topicData);
     let profile = table[this.state.nhood];
-    // one indicator
-    let indicatorData = this.toIndicator(topicData, this.state.indicator);
-    let mapData = this.toMap(indicatorData);
-
-    let mapColors = this.makeMapScale(mapData);
-    let barColors = this.makeBarScale(indicatorData);
-
-    // get format of current indicator
-    let fmt = _.find(meta[this.state.topic], { indicator: this.state.indicator }).format;
+    ////////////
+    // console.log('indicators', indicators);
+    console.log('state', this.state);
 
     return (
       <div className="App">
@@ -227,7 +237,7 @@ export default class App extends React.Component {
             <Header as='h1'><Icon name='home' /> Neighborhood Profile: {citiesIdx[this.state.city].title}</Header>
           </Grid.Row>
           <Grid.Row>
-            <Intro />
+            {/*<Intro />*/}
           </Grid.Row>
 
           <Grid.Row>
@@ -248,23 +258,24 @@ export default class App extends React.Component {
               <Viz
                 indicator={this.state.indicator}
                 displayIndicator={displayIndicator}
-                indicatorData={indicatorData}
-                mapData={mapData}
+                indicatorData={this.state.indicatorData}
+                mapData={this.state.mapData}
                 shapes={shapes}
                 city={this.state.city}
-                nhood={this.state.nhood}
-                mapColors={mapColors}
-                barColors={barColors}
+                mapColors={this.state.mapColors}
+                barColors={this.state.barColors}
                 handleShape={this.handleShape}
                 handleBar={this.handleBar}
-                fmt={fmt}
                 year={year} />
             </Grid.Column>
             <Grid.Column width={6}>
               <Profile
                 data={profile}
                 nhood={this.state.nhood}
-                topic={meta[this.state.topic][0].displayTopic}
+                topic={
+                  // meta[this.state.topic][0].displayTopic
+                  'dummy'
+                }
               />
             </Grid.Column>
           </Grid.Row>
@@ -272,10 +283,7 @@ export default class App extends React.Component {
           <Grid.Row>
             <Grid.Column>
               <DataTable
-                data={table}
-                nhood={this.state.nhood}
-                handleClick={this.handleRowClick}
-                handleSort={this.handleTableSort}
+                data={this.state.topicData}
               />
             </Grid.Column>
           </Grid.Row>

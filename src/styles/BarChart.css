@@ -1,0 +1,48 @@
+.BarChart {
+
+}
+
+.BarChart .tick > path {
+  stroke: lightgray;
+}
+
+.BarChart line.axis-baseline {
+  stroke: none;
+}
+
+.BarChart .ordinal-labels text {
+  /* vertical-align: top; */
+  font-size: 0.8rem;
+}
+
+.BarChart .axis-labels text {
+  font-size: 0.8rem;
+}
+
+.BarChart .tooltip-content {
+  font-size: 0.7rem;
+  background: #222222dd;
+  color: white;
+  border-radius: 2px;
+  padding: 8px;
+  z-index: 99;
+  line-height: 1;
+  /* font-weight: 700; */
+  pointer-events: none;
+  min-width: 60px;
+  /* position: absolute; */
+  top: -1rem;
+  position: relative;
+  left: 0.4rem;
+}
+
+.BarChart .tooltip-content:after {
+  /* box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: #222222dd;
+  position: absolute;
+  pointer-events: none; */
+}

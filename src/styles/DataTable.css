@@ -1,0 +1,21 @@
+.DataTable {
+	overflow-x: auto;
+	max-height: 600px;
+}
+
+@media (max-width: 991px) {
+	.DataTable {
+		/* overflow-y: scroll; */
+		/* max-height: 400px; */
+	}
+}
+
+@media (min-width: 992px) {
+	.DataTable {
+		/* overflow-y: auto; */
+	}
+}
+
+.DataTable tr.hilite {
+  background-color: #fad7ec;
+}

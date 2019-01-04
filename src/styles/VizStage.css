@@ -1,0 +1,9 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700');
+
+.VizStage {
+  font-family: 'Roboto Condensed', 'sans-serif';
+}
+
+.VizStage h2.ui.header {
+  font-size: 1.2rem;
+}
