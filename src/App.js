@@ -1,9 +1,8 @@
 import React from 'react';
-import { Grid, Divider, Header, Icon, Tab } from 'semantic-ui-react';
+import { Grid, Header, Icon } from 'semantic-ui-react';
 import { scaleThreshold, scaleOrdinal } from 'd3-scale';
 import { schemeGnBu } from 'd3-scale-chromatic';
 import { ckmeans } from 'simple-statistics';
-import * as topojson from 'topojson-client';
 import * as _ from 'lodash';
 
 import Filters from './components/Filters';
@@ -20,7 +19,6 @@ import metaLong from './data/nhood_meta.json';
 // import dataLong from './data/nhood_data.json';
 import initData from './data/nhood_data_wide.json';
 
-const shpAll = require('./shapes/topo_all.json');
 const shapes = {
   new_haven: require('./shapes/new_haven_topo.json'),
   bridgeport: require('./shapes/bridgeport_topo.json'),

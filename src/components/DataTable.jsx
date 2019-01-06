@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Sticky } from 'semantic-ui-react';
+import { Table } from 'semantic-ui-react';
 import * as _ from 'lodash';
 import { cleanVal } from './utils.js';
 

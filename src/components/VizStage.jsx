@@ -1,5 +1,5 @@
 import React from 'react';
-import { Header, Tab } from 'semantic-ui-react';
+import { Header } from 'semantic-ui-react';
 import { componentFromProp } from 'recompose';
 
 import BarChart from './BarChart';

@@ -1,7 +1,6 @@
 import React from 'react';
 import * as topojson from 'topojson-client';
 import { Map, TileLayer, GeoJSON, LayersControl, LayerGroup } from 'react-leaflet';
-import * as turf from '@turf/turf';
 import * as _ from 'lodash';
 import { cleanVal } from './utils.js';
 import Legend from './Legend';

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Tab, Header } from 'semantic-ui-react';
-import { scaleOrdinal } from 'd3-scale';
+import { Tab } from 'semantic-ui-react';
 
 import VizStage from './VizStage';
 

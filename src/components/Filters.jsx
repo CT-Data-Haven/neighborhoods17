@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Select } from 'semantic-ui-react';
+import { Form } from 'semantic-ui-react';
 import * as _ from 'lodash';
 
 import '../styles/Filters.css';
