@@ -11,12 +11,14 @@ import Viz from './components/Viz';
 import Profile from './components/Profile';
 import DataTable from './components/DataTable';
 import Intro from './components/Intro';
+import Footer from './components/Footer';
 
 import './App.css';
 
 import cities from './data/routes.js';
 import metaLong from './data/nhood_meta.json';
-import dataLong from './data/nhood_data.json';
+// import dataLong from './data/nhood_data.json';
+import initData from './data/nhood_data_wide.json';
 
 const shpAll = require('./shapes/topo_all.json');
 const shapes = {
@@ -32,16 +34,16 @@ const barscheme = [ '#3fa0e0', '#8f8f8f', '#8f8f8f', '#8f8f8f' ];
 const year = 2017;
 
 const meta = _.groupBy(metaLong, 'topic');
-const initData = _.groupBy(dataLong, 'city');
+// const initData = _.groupBy(firstData, 'city');
 const citiesIdx = _.keyBy(cities, 'id');
 
 // FUNCTIONS
 const firstNeighborhood = (city) => (
-  _.chain(initData[city])
-    .map('data')
+  _.chain(initData[city][0].data)
+    .filter({ geoType: '1_neighborhood'})
+    .map('name')
     .first()
-    .find({ geoType: '1_neighborhood' })
-    .value().name
+    .value()
 );
 
 const fetchIndicators = (topic) => (
@@ -92,22 +94,26 @@ export default class App extends React.Component {
   }
 
   fetchData({ city, topic }) {
-    return _.filter(initData[city], { topic: topic });
+    return _.find(initData[city], { topic: topic });
   }
 
   // takes fetch
   toTopic(fetched, topic) {
-    return _.map(fetched, (d, i) => {
+    let out = _.map(fetched, (d, i) => {
         let metaVals = _.chain(meta[topic]).find({ indicator: d.indicator }).omit([ 'order', 'suborder' ]).value();
         return ({ ...metaVals, ...d });
       });
+    return out;
   }
 
-  // takes topicData
-  toIndicator(byTopic, indicator) {
-    return _.chain(byTopic)
-      .filter({ indicator: indicator })
-      .flatMap('data')
+  // takes fetch
+  toIndicator(fetched, indicator) {
+    return _.chain(fetched.data)
+      .flatMap((d, i) => ({
+        name: d.name,
+        geoType: d.geoType,
+        value: d[indicator]
+      }))
       .sortBy('value')
       .value();
   }
@@ -120,19 +126,6 @@ export default class App extends React.Component {
       .value();
   }
 
-  // takes topicData
-  // redo: wide data, keys are indicators
-  toTable(byTopic) {
-    console.log(byTopic);
-    let out = _.chain(byTopic)
-      .flatMap((d, i) => {
-        let metaVals = _.omit(d, 'data');
-        return d.data.map((v) => ({ ...metaVals, ...v }));
-      })
-      .groupBy('name')
-      .value();
-    return out;
-  }
 
   ///////// scales
   makeMapScale(data) {
@@ -204,21 +197,22 @@ export default class App extends React.Component {
   render() {
     let indicators = fetchIndicators(this.state.topic);
     let displayIndicator = _.find(indicators, { indicator: this.state.indicator }).displayIndicator;
-
-    // lots of different shapes of data
+    let topicMeta = meta[this.state.topic];
     // all indicators
-    let topicData = this.toTopic(this.state.fetch, this.state.topic);
-    let table = this.toTable(topicData);
-    let profile = table[this.state.nhood];
+    let table = _.chain(this.state.fetch.data)
+      .map((d, i) => _.omit(d, 'geoType', 'town'))
+      .sortBy(this.state.sortCol)
+      .value();
+    let profile = _.find(table, { name: this.state.nhood });
     // one indicator
-    let indicatorData = this.toIndicator(topicData, this.state.indicator);
+    let indicatorData = this.toIndicator(this.state.fetch, this.state.indicator);
     let mapData = this.toMap(indicatorData);
 
     let mapColors = this.makeMapScale(mapData);
     let barColors = this.makeBarScale(indicatorData);
 
     // get format of current indicator
-    let fmt = _.find(meta[this.state.topic], { indicator: this.state.indicator }).format;
+    let fmt = _.find(topicMeta, { indicator: this.state.indicator }).format;
 
     return (
       <div className="App">
@@ -263,8 +257,8 @@ export default class App extends React.Component {
             <Grid.Column width={6}>
               <Profile
                 data={profile}
-                nhood={this.state.nhood}
-                topic={meta[this.state.topic][0].displayTopic}
+                topicMeta={_.keyBy(topicMeta, 'indicator')}
+                displayTopic={topicMeta[0].displayTopic}
               />
             </Grid.Column>
           </Grid.Row>
@@ -272,16 +266,19 @@ export default class App extends React.Component {
           <Grid.Row>
             <Grid.Column>
               <DataTable
-                data={table}
+                data={this.state.isAscending ? table : table.reverse()}
+                meta={topicMeta}
                 nhood={this.state.nhood}
                 handleClick={this.handleRowClick}
                 handleSort={this.handleTableSort}
+                isAscending={this.state.isAscending}
+                sortCol={this.state.sortCol}
               />
             </Grid.Column>
           </Grid.Row>
 
           <Grid.Row>
-            {/*<Footer />*/}
+            <Footer city={this.state.city} />
           </Grid.Row>
         </Grid>
 

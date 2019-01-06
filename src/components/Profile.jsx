@@ -6,21 +6,31 @@ import { cleanVal } from './utils.js';
 import '../styles/Profile.css';
 
 const Profile = (props) => {
-  let rows = _.isEmpty(props.data) ?
-    // null :
-    <Table.Row warning><Table.Cell>No data available</Table.Cell></Table.Row> :
-    props.data.map((d, i) => (
-      <Table.Row key={`row-${i}`} className={`list-${d.type}`}>
-        <Table.Cell>{d.displayIndicator}</Table.Cell>
-        <Table.Cell textAlign='right'>{cleanVal(d.value, d.format)}</Table.Cell>
-      </Table.Row>
-    )
-  );
+  let rows, name;
+  if (props.data) {
+    name = props.data.name;
+    rows = _.chain(props.data)
+      .omit('name')
+      .map((d, i) => {
+        let meta = props.topicMeta[i];
+        let fmt = meta.format;
+        return (
+          <Table.Row key={`profile-${i}`}>
+            <Table.Cell textAlign='left'>{meta.displayIndicator}</Table.Cell>
+            <Table.Cell textAlign='right'>{cleanVal(d, fmt)}</Table.Cell>
+          </Table.Row>
+        );
+      })
+      .value();
+  } else {
+    name = null;
+    rows = (<Table.Row warning><Table.Cell>No data available</Table.Cell></Table.Row>);
+  }
 
   return (
     <div className='Profile'>
-      <Header as='h3' attached='top'>{props.topic} - {props.nhood}</Header>
-      <Table definition attached compact unstackable>
+      <Header as='h3' attached='top'>{props.displayTopic} - {name}</Header>
+      <Table definition attached compact unstackable size='small'>
         <Table.Body>{ rows }</Table.Body>
       </Table>
     </div>

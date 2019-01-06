@@ -1,9 +1,12 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700');
+
 .MapContainer {
   /* margin: 24px auto; */
   position: relative;
   border-right: 1px solid #d4d4d5;
   border-left: 1px solid #d4d4d5;
   border-bottom: 1px solid #d4d4d5;
+  font-family: 'Roboto Condensed', 'sans-serif';
 }
 
 .MapContainer .leaflet-container {
@@ -17,7 +20,7 @@
   border-color: #333;
   opacity: 0.85;
   font-size: 0.8em;
-  /* font-family: 'Barlow', sans-serif; */
+  font-family: 'Barlow', sans-serif;
   padding: 3px;
   font-weight: 400;
 }
