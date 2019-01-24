@@ -52,7 +52,7 @@ const Viz = (props) => {
       <Tab menu={{
         secondary: true,
         pointing: true,
-        color: 'blue'
+        color: 'purple'
       }}
       panes={panes} />
     </div>

@@ -26,6 +26,7 @@ const DataTable = (props) => {
     rows = props.data.map((d, i) => (
       <Table.Row key={`tablerow-${d.name}`}
         onClick={() => props.handleClick(d.name)}
+        active={props.nhood === d.name}
         className={props.nhood === d.name ? 'hilite' : null}>
         { _.map(d, (v, j) => {
           let align = _.isNumber(v) ? 'right' : 'left';
@@ -45,7 +46,7 @@ const DataTable = (props) => {
 
   return (
 		<div className='DataTable'>
-      <Table compact fixed unstackable selectable sortable celled color='blue' size='small'>
+      <Table compact fixed unstackable selectable sortable celled size='small'>
         <Table.Header>
           <Table.Row>{header}</Table.Row>
         </Table.Header>
