@@ -16,7 +16,6 @@ import './App.css';
 
 import cities from './data/routes.js';
 import metaLong from './data/nhood_meta.json';
-// import dataLong from './data/nhood_data.json';
 import initData from './data/nhood_data_wide.json';
 
 const shapes = {
@@ -32,7 +31,6 @@ const barscheme = [ '#3fa0e0', '#8f8f8f', '#8f8f8f', '#8f8f8f' ];
 const year = 2017;
 
 const meta = _.groupBy(metaLong, 'topic');
-// const initData = _.groupBy(firstData, 'city');
 const citiesIdx = _.keyBy(cities, 'id');
 
 // FUNCTIONS
@@ -45,7 +43,6 @@ const firstNeighborhood = (city) => (
 );
 
 const fetchIndicators = (topic) => (
-  // _.filter(meta[topic], { type: 'map' })
   _.chain(meta[topic])
     .toArray()
     .filter({ type: 'map' })
@@ -213,7 +210,7 @@ export default class App extends React.Component {
     let fmt = _.find(topicMeta, { indicator: this.state.indicator }).format;
 
     return (
-      <div className="App">
+      <div className="App" role="main">
         <Grid container stackable>
           <Grid.Row>
             <Header as='h1'><Icon name='home' /> Neighborhood Profile: {citiesIdx[this.state.city].title}</Header>
@@ -276,7 +273,7 @@ export default class App extends React.Component {
           </Grid.Row>
 
           <Grid.Row>
-            <Footer city={this.state.city} />
+            <Footer city={this.state.city} data={initData[this.state.city]} />
           </Grid.Row>
         </Grid>
 
